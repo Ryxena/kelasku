@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Helper\ApiResult;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -20,10 +21,7 @@ class UserController extends Controller
             'profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
         if($validator->fails()) {
-            return response()->json([
-                "msg" => "Validation error",
-                "error" => $validator->errors()
-            ], 422);
+            return ApiResult::Response(422, "Validation error", $validator->errors());
         }
         $profileImage = null;
         if($request->hasFile('profile')) {
@@ -39,14 +37,9 @@ class UserController extends Controller
             'password' => Hash::make($request->password)
         ]);
         if ($user->save()) {
-            return response()->json([
-                "msg" => "Data berhasil disimpan",
-                "data" => $user
-            ], 200);
+            return ApiResult::Response(200, "Data berhasil disimpan", $user);
         } else {
-            return response()->json([
-                "msg" => "Terjadi kesalahan saat menyimpan data"
-            ], 500);
+            return ApiResult::Response(500, "Terjadi kesalahan saat menyimpan data", null);
         }
     }
 
@@ -57,10 +50,7 @@ class UserController extends Controller
             'password' => 'required|string|min:8',
         ]);
         if($validator->fails()) {
-            return response()->json([
-                "msg" => "Validation error",
-                "error" => $validator->errors()
-            ], 422);
+            return ApiResult::Response(422, "Validation error", $validator->errors());
         }
         $credentials = $request->only('phone', 'password');
         if (Auth::attempt($credentials)) {
@@ -76,9 +66,7 @@ class UserController extends Controller
                 'token' => $token
             ], 200);
         } else {
-            return response()->json([
-                "msg" => "Phone atau Password salah"
-            ], 500);
+            return ApiResult::Response(500, "Phone atau Password salah", null);
         }
     }
 
@@ -88,9 +76,7 @@ class UserController extends Controller
     {
         $req->user()->currentAccessToken()->delete();
 
-        return response()->json([
-            'msg' => 'Berhasil Logout'
-        ]);
+        return ApiResult::Response(200, 'Berhasil Logout', null);
     }
 
 
@@ -107,10 +93,7 @@ class UserController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                "msg" => "Validation error",
-                "error" => $validator->errors()
-            ], 422);
+            return ApiResult::Response(422, "Validation error", $validator->errors());
         }
 
         $profileImage = $user->profile;
@@ -126,14 +109,9 @@ class UserController extends Controller
         $user->profile = $profileImage;
 
         if ($user->save()) {
-            return response()->json([
-                "msg" => "Profil berhasil diperbarui",
-                "user" => $user
-            ], 200);
+            return ApiResult::Response(200, "Profil berhasil diperbarui", $user);
         } else {
-            return response()->json([
-                "msg" => "Terjadi kesalahan saat memperbarui profil"
-            ], 500);
+            return ApiResult::Response(500, "Terjadi kesalahan saat memperbarui profil", null);
         }
     }
 
