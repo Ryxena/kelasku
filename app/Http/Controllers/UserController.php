@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Helper\ApiResult;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
@@ -16,15 +17,15 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|min:3',
             'school_id' => 'required|exists:school,id',
-            'phone' => 'required|unique:users,phone|',
+            'phone' => 'required|min:10|unique:users,phone',
             'password' => 'required|string|min:8|confirmed',
             'profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-        if($validator->fails()) {
+        if ($validator->fails()) {
             return ApiResult::Response(422, "Validation error", $validator->errors());
         }
         $profileImage = null;
-        if($request->hasFile('profile')) {
+        if ($request->hasFile('profile')) {
             $image = $request->file('profile');
             $profileImage = $image->storeAs('public/profile', $image->hashName());
 
@@ -46,22 +47,23 @@ class UserController extends Controller
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'phone' => 'required|string|min:5',
+            'phone' => 'required|string|min:10',
             'password' => 'required|string|min:8',
         ]);
-        if($validator->fails()) {
+        if ($validator->fails()) {
             return ApiResult::Response(422, "Validation error", $validator->errors());
         }
         $credentials = $request->only('phone', 'password');
         if (Auth::attempt($credentials)) {
-            if($request->filled('device_token')) {
+            if ($request->filled('device_token')) {
                 auth()->user()->update(['device_token' => $request->device_token]);
             }
             $user = User::where('id', Auth::user()->id)->first();
             $token = $user->createToken('user-token')->plainTextToken;
 
             return response()->json([
-                "msg" => "Login berhasil",
+                "status" => "200",
+                "message" => "Login berhasil",
                 'data' => $user,
                 'token' => $token
             ], 200);
@@ -69,7 +71,6 @@ class UserController extends Controller
             return ApiResult::Response(500, "Phone atau Password salah", null);
         }
     }
-
 
 
     public function logout(Request $req)
@@ -85,10 +86,10 @@ class UserController extends Controller
         $user = auth()->user();
 
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|min:3',
-            'school_id' => 'required|exists:school,id',
-            'phone' => 'required|unique:users,phone',
-            'password' => 'required|string|min:5',
+            'name' => 'nullable|string|min:3',
+            'school_id' => 'nullable|exists:school,id',
+            'phone' => 'nullable|unique:users,phone,' . $user->id,
+            'password' => 'nullable|string|min:5',
             'profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -96,21 +97,37 @@ class UserController extends Controller
             return ApiResult::Response(422, "Validation error", $validator->errors());
         }
 
-        $profileImage = $user->profile;
+        try {
+            if ($request->hasFile('profile')) {
+                if ($user->profile != null) {
+                    Storage::delete($user->profile);
+                }
 
-        if ($request->hasFile('profile')) {
-            $image = $request->file('profile');
-            $profileImage = $image->storeAs('public/profile', $image->hashName());
-        }
+                $image = $request->file('profile');
+                $profileImage = $image->storeAs('public/profile', $image->hashName());
+                $user->profile = $profileImage;
+            }
 
-        $user->name = $request->name;
-        $user->school_id = $request->school_id;
-        $user->phone = $request->phone;
-        $user->profile = $profileImage;
+            if ($request->filled('name')) {
+                $user->name = $request->name;
+            }
 
-        if ($user->save()) {
+            if ($request->filled('school_id')) {
+                $user->school_id = $request->school_id;
+            }
+
+            if ($request->filled('phone')) {
+                $user->phone = $request->phone;
+            }
+
+            if ($request->filled('password')) {
+                $user->password = Hash::make($request->password);
+            }
+
+            $user->save();
+
             return ApiResult::Response(200, "Profil berhasil diperbarui", $user);
-        } else {
+        } catch (Exception $e) {
             return ApiResult::Response(500, "Terjadi kesalahan saat memperbarui profil", null);
         }
     }

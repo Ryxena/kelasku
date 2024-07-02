@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helper\FCM;
+use App\Helper\FirebaseHelper;
 use App\Models\User;
 use App\Helper\ApiResult;
 use App\Models\Friendship;
@@ -13,6 +14,13 @@ use function PHPUnit\Framework\isEmpty;
 
 class FriendshipController extends Controller
 {
+    protected $firebaseService;
+
+    public function __construct(FirebaseHelper $firebaseService)
+    {
+        $this->firebaseService = $firebaseService;
+    }
+
     public function getFriendList()
     {
         $user = auth()->user();
@@ -181,16 +189,30 @@ class FriendshipController extends Controller
         $user = auth()->user();
         $user->friends()->detach($friendId);
 
-        return response()->json(["msg" => "Pertemanan berhasil dihapus"], 200);
+        return ApiResult::Response(200, "Pertemanan berhasil dihapus", null);
     }
 
     public function colek(Request $request)
     {
+        $user = auth()->user();
+        $target = User::where("phone", $request->phone)->first();
 
-        FCM::android([auth()->user()->device_token])->send([
-            'title' => 'Hello, ' . $request->naem,
-            'message' => "$request->name dicolek ". auth()->user()->name
-        ]);
+        if (!$target) {
+            return ApiResult::Response(404, "Target user not found", null);
+        }
 
+        $token = $target->device_token;
+        $title = 'Kamu di colek xD';
+        $body = "Hei $target->name kamu dicolek oleh $user->name";
+
+        $result = $this->firebaseService->sendNotification($token, $title, $body);
+
+        if ($result) {
+            return ApiResult::Response(200, "Notification sent successfully", null);
+        } else {
+            return ApiResult::Response(500, "Failed to send notification", null);
+        }
     }
+
+
 }
