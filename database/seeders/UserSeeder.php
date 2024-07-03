@@ -24,42 +24,42 @@ class UserSeeder extends Seeder
         ]);
         User::create([
             "name" => "Rubben",
-            "phone" => "11111111",
+            "phone" => "1111111111111",
             "profile" => "",
             "password" => Hash::make("12345678"),
             "school_id" => "1"
         ]);
         User::create([
             "name" => "John",
-            "phone" => "22222222",
+            "phone" => "2222222222222",
             "profile" => "",
             "password" => Hash::make("12345678"),
             "school_id" => "2"
         ]);
         User::create([
             "name" => "Doe",
-            "phone" => "33333333",
+            "phone" => "3333333333333",
             "profile" => "",
             "password" => Hash::make("12345678"),
             "school_id" => "3"
         ]);
         User::create([
             "name" => "David",
-            "phone" => "44444444",
+            "phone" => "4444444444444",
             "profile" => "",
             "password" => Hash::make("12345678"),
             "school_id" => "4"
         ]);
         User::create([
             "name" => "Abraham",
-            "phone" => "55555555",
+            "phone" => "5555555555555",
             "profile" => "",
             "password" => Hash::make("12345678"),
             "school_id" => "5"
         ]);
         User::create([
             "name" => "Joseph",
-            "phone" => "66666666",
+            "phone" => "6666666666666",
             "profile" => "",
             "password" => Hash::make("12345678"),
             "school_id" => "6"

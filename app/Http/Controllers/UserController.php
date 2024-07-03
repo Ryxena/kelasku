@@ -17,7 +17,7 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|min:3',
             'school_id' => 'required|exists:school,id',
-            'phone' => 'required|min:10|unique:users,phone',
+            'phone' => 'required|min:10|max:14|unique:users,phone',
             'password' => 'required|string|min:8|confirmed',
             'profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
