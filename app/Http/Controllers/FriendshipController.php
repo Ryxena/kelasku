@@ -100,6 +100,7 @@ class FriendshipController extends Controller
         $allConnectedUserIds = array_unique(array_merge($friendsAndPending, $pendingAndFriends));
 
         $potentialFriends = User::whereNotIn('id', $allConnectedUserIds)
+            ->where('role', '!=', 'admin')
             ->with('school')
             ->get()
             ->each(function ($user) {
